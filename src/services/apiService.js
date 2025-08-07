@@ -3,7 +3,8 @@
 const API_BASE_URL = 'https://letter-app-24x3.onrender.com';
 
 // --- API Service ---
-const apiService = {
+// Changed to a named export to match the import statement in other files
+export const apiService = {
   /**
    * A general-purpose request function to handle all API calls.
    * It automatically adds the auth token and handles JSON parsing.
@@ -73,6 +74,3 @@ const apiService = {
     method: 'POST',
   }),
 };
-
-// Export the service so it can be imported in other files
-export default apiService;
