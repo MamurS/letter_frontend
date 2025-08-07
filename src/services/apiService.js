@@ -1,5 +1,5 @@
 // IMPORTANT: Replace this with your actual Render backend URL
-const API_BASE_URL = 'https://your-letter-app.onrender.com';
+const API_BASE_URL = 'https://letter-app-24x3.onrender.com';
 
 export const apiService = {
   async request(endpoint, options = {}) {
