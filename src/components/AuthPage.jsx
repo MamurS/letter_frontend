@@ -17,7 +17,7 @@ const AuthPage = ({ onLogin }) => {
     setIsLoading(true); setMessage(''); setError('');
     try {
       const data = await apiService.login(username, password);
-      onLogin(data.access, username);
+      onLogin(data, username);
     } catch (err) {
       setError(err.message);
     } finally {
