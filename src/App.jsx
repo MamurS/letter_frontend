@@ -7,7 +7,7 @@ export default function App() {
   const [username, setUsername] = useState(localStorage.getItem('username'));
 
   const handleLogin = (tokens, loggedInUsername) => {
-    // Store both access and refresh tokens
+    // Store both the access and refresh tokens from the API response
     localStorage.setItem('authToken', tokens.access);
     localStorage.setItem('refreshToken', tokens.refresh);
     localStorage.setItem('username', loggedInUsername);
