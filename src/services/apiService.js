@@ -2,8 +2,10 @@
 // IMPORTANT: Replace this with your actual Render backend URL
 const API_BASE_URL = 'https://letter-app-24x3.onrender.com';
 
+// A variable to prevent infinite refresh loops
+let isRefreshing = false;
+
 // --- API Service ---
-// Changed to a named export to match the import statement in other files
 export const apiService = {
   /**
    * A general-purpose request function to handle all API calls.
@@ -13,6 +15,47 @@ export const apiService = {
    * @returns {Promise<any>} - The JSON response from the server.
    */
   async request(endpoint, options = {}) {
+    let response = await this.fetchWithAuth(endpoint, options);
+
+    // If the token is expired (401 error), try to refresh it and retry the request
+    if (response.status === 401 && !options.isRetry) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshResponse = await this.refreshToken();
+          localStorage.setItem('authToken', refreshResponse.access);
+          isRefreshing = false;
+          // Retry the original request with the new token
+          return this.request(endpoint, { ...options, isRetry: true });
+        } catch (refreshError) {
+          isRefreshing = false;
+          // If refresh fails, log the user out
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('username');
+          window.location.reload(); // Reload the page to show the login screen
+          return Promise.reject(refreshError);
+        }
+      }
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'An unknown server error occurred.' }));
+      throw new Error(errorData.detail || errorData.error || JSON.stringify(errorData));
+    }
+
+    const contentLength = response.headers.get('content-length');
+    if (response.status === 204 || contentLength === '0') {
+      return null;
+    }
+
+    return response.json();
+  },
+
+  /**
+   * A helper function to attach the auth token to fetch requests.
+   */
+  fetchWithAuth: (endpoint, options = {}) => {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
@@ -24,22 +67,7 @@ export const apiService = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, { ...options, headers });
-
-    if (!response.ok) {
-      // Try to parse the error response, but provide a fallback
-      const errorData = await response.json().catch(() => ({ detail: 'An unknown server error occurred.' }));
-      throw new Error(errorData.detail || errorData.error || JSON.stringify(errorData));
-    }
-
-    // **FIX for "Unexpected end of JSON input" error**
-    // Check if the response has content before trying to parse it as JSON.
-    const contentLength = response.headers.get('content-length');
-    if (response.status === 204 || contentLength === '0') {
-      return null; // Return null for empty success responses (e.g., from cancel/restore)
-    }
-
-    return response.json();
+    return fetch(url, { ...options, headers });
   },
 
   // --- Authentication Endpoints ---
@@ -48,12 +76,12 @@ export const apiService = {
     body: JSON.stringify({ username, password }),
   }),
 
-  signup: (email) => apiService.request('/api/signup/', {
+  refreshToken: () => apiService.request('/api/token/refresh/', {
     method: 'POST',
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ refresh: localStorage.getItem('refreshToken') }),
   }),
 
-  requestPasswordReset: (email) => apiService.request('/api/password-reset/', {
+  signup: (email) => apiService.request('/api/signup/', {
     method: 'POST',
     body: JSON.stringify({ email }),
   }),

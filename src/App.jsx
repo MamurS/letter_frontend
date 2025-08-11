@@ -6,15 +6,19 @@ export default function App() {
   const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
   const [username, setUsername] = useState(localStorage.getItem('username'));
 
-  const handleLogin = (token, loggedInUsername) => {
-    localStorage.setItem('authToken', token);
+  const handleLogin = (tokens, loggedInUsername) => {
+    // Store both access and refresh tokens
+    localStorage.setItem('authToken', tokens.access);
+    localStorage.setItem('refreshToken', tokens.refresh);
     localStorage.setItem('username', loggedInUsername);
-    setAuthToken(token);
+    setAuthToken(tokens.access);
     setUsername(loggedInUsername);
   };
 
   const handleLogout = () => {
+    // Remove all session-related items
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('username');
     setAuthToken(null);
     setUsername(null);
