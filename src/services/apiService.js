@@ -86,6 +86,17 @@ export const apiService = {
     body: JSON.stringify({ email }),
   }),
 
+  // --- Password Reset Endpoints ---
+  requestPasswordReset: (email) => apiService.request('/api/password-reset/', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  }),
+
+  confirmPasswordReset: (uidb64, token, password, password2) => apiService.request(`/api/password-reset/${uidb64}/${token}/`, {
+    method: 'POST',
+    body: JSON.stringify({ password, password2 }),
+  }),
+
   // --- Letter Management Endpoints ---
   getLetters: () => apiService.request('/api/letters/'),
 
